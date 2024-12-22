@@ -60,3 +60,23 @@ func printUser(user database.User) {
 	fmt.Printf(" * ID:      %v\n", user.ID)
 	fmt.Printf(" * Name:    %v\n", user.Name)
 }
+
+func handlerReset(s *state, cmd command) error {
+	if len(cmd.Args) != 0 {
+		return fmt.Errorf("usage: %s <name> (no arguments needed)", cmd.Name)
+	}
+
+	err := s.db.DeleteAllUsers(context.Background())
+	if err != nil {
+		return fmt.Errorf("could not delete all users from DB %s", err)
+	}
+
+	err = s.cfg.SetUser("")
+	if err != nil {
+		return fmt.Errorf("couldn't set current user to none: %w", err)
+	}
+
+	fmt.Println("All users cleared")
+
+	return nil
+}
