@@ -9,6 +9,11 @@ import (
 	"github.com/jamesfulreader/gator/internal/database"
 )
 
+func printUser(user database.User) {
+	fmt.Printf(" * ID:      %v\n", user.ID)
+	fmt.Printf(" * Name:    %v\n", user.Name)
+}
+
 func handlerRegister(s *state, cmd command) error {
 	if len(cmd.Args) != 1 {
 		return fmt.Errorf("usage: %v <name>", cmd.Name)
@@ -56,11 +61,6 @@ func handlerLogin(s *state, cmd command) error {
 	return nil
 }
 
-func printUser(user database.User) {
-	fmt.Printf(" * ID:      %v\n", user.ID)
-	fmt.Printf(" * Name:    %v\n", user.Name)
-}
-
 func handlerReset(s *state, cmd command) error {
 	if len(cmd.Args) != 0 {
 		return fmt.Errorf("usage: %s <name> (no arguments needed)", cmd.Name)
@@ -68,7 +68,7 @@ func handlerReset(s *state, cmd command) error {
 
 	err := s.db.DeleteAllUsers(context.Background())
 	if err != nil {
-		return fmt.Errorf("could not delete all users from DB %s", err)
+		return fmt.Errorf("could not delete all users %s", err)
 	}
 
 	err = s.cfg.SetUser("")
@@ -77,6 +77,27 @@ func handlerReset(s *state, cmd command) error {
 	}
 
 	fmt.Println("All users cleared")
+
+	return nil
+}
+
+func handlerUsers(s *state, cmd command) error {
+	if len(cmd.Args) != 0 {
+		return fmt.Errorf("usage: %s <name> (no arguments needed)", cmd.Name)
+	}
+
+	users, err := s.db.GetAllUsers(context.Background())
+	if err != nil {
+		return fmt.Errorf("could not get all users %s", err)
+	}
+
+	for _, user := range users {
+		if s.cfg.CurrentUserName == user.Name {
+			fmt.Printf("* %s (current)\n", user.Name)
+		} else {
+			fmt.Printf("* %s\n", user.Name)
+		}
+	}
 
 	return nil
 }
