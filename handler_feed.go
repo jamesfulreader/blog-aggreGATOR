@@ -35,27 +35,21 @@ func handlerFetch(s *state, cmd command) error {
 	return nil
 }
 
-func handlerAddFeed(s *state, cmd command) error {
+func handlerAddFeed(s *state, cmd command, user database.User) error {
 	if len(cmd.Args) != 2 {
-		return fmt.Errorf("usage: %v <name>", cmd.Name)
+		return fmt.Errorf("usage: %s <name> <url>", cmd.Name)
 	}
 
-	name := s.cfg.CurrentUserName
-	currentUser, err := s.db.GetUser(context.Background(), name)
-	if err != nil {
-		return fmt.Errorf("couldn't find user: %w", err)
-	}
-
-	feedName := cmd.Args[0]
-	feedURL := cmd.Args[1]
+	name := cmd.Args[0]
+	url := cmd.Args[1]
 
 	feed, err := s.db.CreateFeed(context.Background(), database.CreateFeedParams{
 		ID:        uuid.New(),
 		CreatedAt: time.Now().UTC(),
 		UpdatedAt: time.Now().UTC(),
-		Name:      feedName,
-		Url:       feedURL,
-		UserID:    currentUser.ID,
+		UserID:    user.ID,
+		Name:      name,
+		Url:       url,
 	})
 	if err != nil {
 		return fmt.Errorf("couldn't create feed: %w", err)
@@ -65,7 +59,7 @@ func handlerAddFeed(s *state, cmd command) error {
 		ID:        uuid.New(),
 		CreatedAt: time.Now().UTC(),
 		UpdatedAt: time.Now().UTC(),
-		UserID:    currentUser.ID,
+		UserID:    user.ID,
 		FeedID:    feed.ID,
 	})
 	if err != nil {
@@ -73,12 +67,11 @@ func handlerAddFeed(s *state, cmd command) error {
 	}
 
 	fmt.Println("Feed created successfully:")
-	printFeed(feed, currentUser)
+	printFeed(feed, user)
 	fmt.Println()
 	fmt.Println("Feed followed successfully:")
 	printFeedFollow(feedFollow.UserName, feedFollow.FeedName)
 	fmt.Println("=====================================")
-
 	return nil
 }
 
